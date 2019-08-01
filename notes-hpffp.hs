@@ -1,3 +1,4 @@
+import Data.Char
 import Data.List as L
 import Data.List (intersperse)
 
@@ -502,12 +503,6 @@ safeTail (x: xs)  = Just xs
 -- *Main> myWords "all i wanna do is have some fun"
 -- ["all","i","wanna","do","is","have","some","fun"]
 
-recursiveTraverse :: [Char] -> String
-recursiveTraverse [] = []
-recursiveTraverse (x:xs)
-  | x /= ' ' = [x] ++ (recursiveTraverse xs)
-  | x == ' ' = recursiveTraverse xs
-
 myWords :: String -> [String]
 myWords ""  = []
 myWords inputS = resultList
@@ -518,3 +513,108 @@ myWords inputS = resultList
     resultList = [word] ++ myWords (dropWhile (/=' ') restS) 
 -- derived from: https://stackoverflow.com/questions/53461230/how-would-i-split-a-string-after-the-spaces-in-haskell
 
+-- recursiveTraverse :: [Char] -> String
+-- recursiveTraverse [] = []
+-- recursiveTraverse (x:xs)
+--   | x /= ' ' = [x] ++ (recursiveTraverse xs)
+--   | x == ' ' = recursiveTraverse xs
+
+
+-- List Comprehensions
+
+-- NOTE: this beauty
+acro xs = [x | x <- xs, elem x ['A'..'Z']]
+
+-- Spines and non-strictness
+
+-- We can use a special command in GHCi called sprint to print vari-
+-- ables and see what has been evaluated already, with the underscore
+-- representing expressions that haven’t been evaluated yet.
+-- WARNING: :sprint has some behavioral quirks that can be a bit 
+-- frustrating.
+
+-- Spines are evaluated independently of values
+-- Values in Haskell get reduced to weak head normal form by default.
+-- By ‘normal form’ we mean that the expression is fully evaluated.
+-- ‘Weak head normal form’ means the expression is only evaluated as
+-- far as is necessary to reach a data constructor.
+-- Weak head normal form (WHNF) is a larger set and contains both
+-- the possibility that the expression is fully evaluated (normal form)
+-- and the possibility that the expression has been evaluated to the point
+-- of arriving at a data constructor or lambda awaiting an argument.
+-- For an expression in weak head normal form, further evaluation
+-- may be possible once another argument is provided. If no further
+-- inputs are possible, then it is still in WHNF but also in normal form
+-- (NF).
+
+-----
+-- NOTE:
+--
+-- \x -> x * 10 -- WHNF & NF
+-- This anonymous function is in normal form because while (*)
+-- has been applied to two arguments of a sort, it cannot be reduced
+-- further until the outer x -> ... has been applied. With nothing
+-- further to reduce, it is in normal form.
+
+-- Remember that an expression cannot be in normal form or weak
+-- head normal form if the outermost part of the expression isn’t a data
+-- constructor. It can’t be in normal form if any part of the expression
+-- is unevaluated.
+-----
+
+-- Write your own version of zip :: [a] -> [b] -> [(a, b)] and
+-- ensure it behaves the same as the original.
+
+ownZip :: [a] -> [b] -> [(a, b)]
+ownZip [] _ = []
+ownZip _ [] = []
+ownZip (a:as) (b:bs) = [(a, b)] ++ ownZip as bs
+
+--
+-- Write your own version of zipWith
+
+ownZipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
+ownZipWith f [] _ = []
+ownZipWith f _ [] = []
+ownZipWith f (a:as) (b:bs) = [f a b] ++ ownZipWith f as bs
+
+-- Rewrite your zip in terms of the zipWith you wrote.
+
+ownZip' :: [a] -> [b] -> [(a, b)]
+ownZip' a b = ownZipWith (,) a b
+
+-- requires Data.Char
+
+capitalizeFirst :: String -> String
+capitalizeFirst (x:xs) = [toUpper x] ++ xs
+
+capitalizeAll :: String -> String
+capitalizeAll [] = []
+capitalizeAll (x:xs) = [toUpper x] ++ capitalizeAll xs
+
+
+--- Casesar cipher with max displacement 26
+-- alphabetsLower = ['a'..'z']
+-- alphabetsLower = 
+-- alphabetsUpper = map toUpper alphabetsLower
+
+-- Above approach is replaced with ord, chr (from data.Char) 
+-- and mod (standard?)
+
+caesarCipher :: Int -> String -> String
+caesarCipher _ [] = []
+caesarCipher shiftAmount (s:ss)
+  | isLower s = [chr ((mod (ord s - ord 'a' + shiftAmount) 26) + ord 'a')] ++ 
+                (caesarCipher shiftAmount ss)
+  | otherwise = [chr ((mod (ord s - ord 'A' + shiftAmount) 26) + ord 'A')] ++ 
+                (caesarCipher shiftAmount ss)
+
+-- TODO: include an unCaesar function
+uncaesarCipher :: Int -> String -> String
+uncaesarCipher _ [] = []
+uncaesarCipher shiftAmount (s:ss)
+  | isLower s       = [chr ((mod (ord s - ord 'a' - shiftAmount) 26) + ord 'a')] ++ 
+                      (uncaesarCipher shiftAmount ss)
+  | otherwise       = [chr ((mod (ord s - ord 'A' - shiftAmount) 26) + ord 'A')] ++ 
+                      (uncaesarCipher shiftAmount ss)
+--- Folding lists
