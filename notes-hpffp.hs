@@ -1,5 +1,6 @@
 import Data.Char
 import Data.List as L
+import Data.Time
 import Data.List (intersperse)
 
 
@@ -617,4 +618,197 @@ uncaesarCipher shiftAmount (s:ss)
                       (uncaesarCipher shiftAmount ss)
   | otherwise       = [chr ((mod (ord s - ord 'A' - shiftAmount) 26) + ord 'A')] ++ 
                       (uncaesarCipher shiftAmount ss)
+
 --- Folding lists
+
+myFoldr :: (a -> b -> b) -> b -> [a] -> b
+myFoldr f b [] = b           -- <== This.
+myFoldr f b (a:as) = f a (myFoldr f b as)
+
+-- changing the type signature for kicks
+myFoldr' :: (a -> b -> b) -> [a] -> b -> b
+myFoldr' f [] z      = z
+myFoldr' f (a:as) z   = f a (myFoldr' f as z)
+
+someRange = map show [1..5]
+foldrExample = foldr (\x y -> concat ["(", x, "+", y, ")"]) "0" someRange
+-- shows right-associativity of foldr => "(1+(2+(3+(4+(5+0)))))"
+
+---
+-- Write an 'ANY' function that takes another function (a -> Bool
+-- and a list [a], and returns the OR of all [f a] 
+-- 
+
+myAny :: (a -> Bool) -> [] a -> Bool
+myAny f as = foldr (\m n -> f m || n) False as
+
+-- The ANY function without foldr -- note the explicit right-associativity 
+myAny' :: (a -> Bool) -> [] a -> Bool
+myAny' _ []     = False
+myAny' f (a:as) = (f a || False) || (myAny' f as) -- is it like python's OR?
+
+---
+
+--- NOTE: Consider this:
+lll = length $ take 2 $ take 4 ([1, 2]++undefined)
+-- 2
+-- It doesn’t matter that take 4 could’ve hit the bottom! Nothing
+-- forced it to because of the take 2 between it and length.
+---
+
+-- TODO: Revisit pg353 for foldr behaviour with undefined (aka bottom)
+--       values in leaves
+
+-- Prelude> foldr (\_ _ -> 9001) 0 [1..5]
+-- 9001
+-- Prelude> foldr (\_ _ -> 9001) 0 [1, 2, 3, undefined]
+-- 9001
+-- Prelude> foldr (\_ _ -> 9001) 0 ([1, 2, 3] ++ undefined)
+-- 9001
+-- Everything is fine unless the first piece of the spine is bottom:
+
+-- Prelude> foldr (\_ _ -> 9001) 0 undefined
+-- *** Exception: Prelude.undefined
+
+-- Prelude> foldr (\_ _ -> 9001) 0 [1, undefined]
+-- 9001
+-- Prelude> foldr (\_ _ -> 9001) 0 [undefined, undefined]
+-- 9001
+
+-- The final two examples work because it isn’t the first cons cell
+-- that is bottom — the undefined values are inside the cons cells, not
+-- in the spine itself. Put differently, the cons cells contain bottom
+-- values but are not themselves bottom.
+
+---
+-- Foldl (LEFT)
+
+myFoldl :: (b -> a -> b) -> b -> [] a -> b
+myfoldl f acc []      = acc       -- <== This.
+myFoldl f acc (a:as)  = myFoldl f (f acc a) as
+
+-- contrast with foldr (RIGHT)
+
+myFoldr_ :: (a -> b -> b) -> b -> [a] -> b
+myFoldr_ f acc []     = acc
+myFoldr_ f acc (a:as) = f a (myFoldr f acc as)
+
+-- NOTE: notice the difference in function application for foldl vs foldr
+--        i.e., foldl = ...f acc a...
+--              foldr = ...f acc as...
+--
+-- NOTE: An important difference between foldr and foldl is that a left fold
+-- has the successive steps of the fold as its first argument.
+-- The next recursion of the spine isn’t intermediated by the folding function
+-- as it is in foldr, which also means recursion of the spine is unconditional.
+---
+
+someRange' = map show [1..5]
+
+foldrExample' = foldr (\x y -> concat ["(", x, "+", y, ")"]) "0" someRange'
+-- shows right-associativity of foldr => "(1+(2+(3+(4+(5+0)))))"
+
+foldlExample' = foldl (\x y -> concat ["(", x, "+", y, ")"]) "0" someRange'
+-- shows left-associativity of foldl => "(((((0+1)+2)+3)+4)+5)"
+
+-- Note:
+
+-- The relationship between the scans and folds are as follows:
+-- last (scanl f z xs) = foldl f z xs
+-- head (scanr f z xs) = foldr f z xs
+
+-- more contrast:
+
+-- foldr (^) 2 [1..3]
+-- (1 ^ (2 ^ (3 ^ 2)))
+-- (1 ^ (2 ^ 9))
+-- 1 ^ 512
+-- 1
+
+-- foldl (^) 2 [1..3]
+-- ((2 ^ 1) ^ 2) ^ 3
+-- (2 ^ 2) ^ 3
+-- 4 ^ 3
+-- 64
+
+-- Also note this:
+
+-- Prelude> foldr (:) [] [1..3]
+-- [1,2,3]
+--
+
+-- [] (1 : 2 : 3 : []) == 1 : (2 : (3 : []))
+
+-- Prelude> foldl (flip (:)) [] [1..3]
+-- [3,2,1]
+--
+-- foldl f z [1, 2, 3]
+-- f ~ (flip (:)); z ~ []
+-- (((z `f` 1) `f` 2) `f` 3)
+
+-- pg361 Q (e)
+-- What is wrong with the following expression?
+-- foldl ((++) . show) "" [1..5]
+
+ans361_5E = foldl (++) "" $ map show [1..5]
+
+funcPg364_R :: [String] -> String
+funcPg364_R lx = foldr (\ a b -> take 4 a ++ b) "" lx
+
+funcPg364_L :: [String] -> String
+funcPg364_L lx = foldl (\ b a -> take 4 a ++ b) "" lx
+
+-- NOTE:
+-- If we want to be explicit, we can assert types for the values
+-- consumed by the above lambda functions
+-- This can be useful for checking that your mental model of the
+-- code is accurate.
+
+fR a b = take 4 (a::String) ++ (b::String)
+fL a b = take 4 (b::String) ++ (a::String)
+
+funcPg364_R' lx = foldr fR "" lx
+funcPg364_L' lx = foldl fL "" lx
+
+-- Excercises: Database Processing (for this Data.Time is imported)
+
+data DatabaseItem       = DbString String
+                        | DbNumber Integer
+                        | DbDate UTCTime
+                        deriving (Eq, Ord, Show)
+
+theDatabase :: [DatabaseItem]
+theDatabase = [
+  DbDate (UTCTime (fromGregorian 1911 5 1) (secondsToDiffTime 34123))
+  , DbNumber 9001
+  , DbString "hello db!"
+  , DbDate (UTCTime (fromGregorian 1921 5 1) (secondsToDiffTime 34123))
+  ]
+
+isDbDate :: DatabaseItems -> Bool
+isDbDate a = undefined
+
+-- Q1. Write a function that filters for DbDate values and returns a list
+-- of the UTCTime values inside them.
+filterDbDate :: [DatabaseItem] -> [UTCTime]
+filterDbDate dbItem = undefined-- filter ()
+
+-- Q2. Write a function that filters for DbNumber values and returns a list
+-- of the Integer values inside them.
+filterDbNumber :: [DatabaseItem] -> [Integer]
+filterDbNumber = undefined
+
+-- Q3. 3. Write a function that gets the most recent date.
+mostRecent :: [DatabaseItem] -> UTCTime
+mostRecent = undefined
+
+-- Q4. Write a function that sums all of the DbNumber values.
+sumDb :: [DatabaseItem] -> Integer
+sumDb = undefined
+
+-- Q5. Write a function that gets the average of the DbNumber values.
+-- You'll probably need to use fromIntegral
+-- to get from Integer to Double.
+avgDb :: [DatabaseItem] -> Double
+avgDb = undefined
+
