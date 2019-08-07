@@ -681,13 +681,13 @@ lll = length $ take 2 $ take 4 ([1, 2]++undefined)
 -- values but are not themselves bottom.
 
 ---
--- Foldl (LEFT)
+-- Foldl (LEFT) (tail recursion)
 
 myFoldl :: (b -> a -> b) -> b -> [] a -> b
 myfoldl f acc []      = acc       -- <== This.
 myFoldl f acc (a:as)  = myFoldl f (f acc a) as
 
--- contrast with foldr (RIGHT)
+-- contrast with foldr (RIGHT) (non-tail recursion)
 
 myFoldr_ :: (a -> b -> b) -> b -> [a] -> b
 myFoldr_ f acc []     = acc
@@ -781,34 +781,85 @@ theDatabase :: [DatabaseItem]
 theDatabase = [
   DbDate (UTCTime (fromGregorian 1911 5 1) (secondsToDiffTime 34123))
   , DbNumber 9001
+  , DbNumber 9001
+  , DbNumber 9001
   , DbString "hello db!"
+  , DbString "hello again db!!!"
   , DbDate (UTCTime (fromGregorian 1921 5 1) (secondsToDiffTime 34123))
   ]
 
-isDbDate :: DatabaseItems -> Bool
-isDbDate a = undefined
+-- TODO: How does the following really work?
+isDbDate :: DatabaseItem -> Bool
+isDbDate (DbDate _) = True
+isDbDate _          = False
+
+isDbString :: DatabaseItem -> Bool
+isDbString (DbString _) = True
+isDbString _            = False
+
+isDbNumber :: DatabaseItem -> Bool
+isDbNumber (DbNumber _) = True
+isDbNumber _            = False
+
+unpackDbDate :: DatabaseItem -> UTCTime
+unpackDbDate (DbDate x) = x
+
+unpackDbString :: DatabaseItem -> String
+unpackDbString (DbString x) = x
+
+unpackDbNumber :: DatabaseItem -> Integer
+unpackDbNumber (DbNumber x) = x
 
 -- Q1. Write a function that filters for DbDate values and returns a list
 -- of the UTCTime values inside them.
 filterDbDate :: [DatabaseItem] -> [UTCTime]
-filterDbDate dbItem = undefined-- filter ()
+filterDbDate db = map unpackDbDate $ filter isDbDate db
 
 -- Q2. Write a function that filters for DbNumber values and returns a list
 -- of the Integer values inside them.
 filterDbNumber :: [DatabaseItem] -> [Integer]
-filterDbNumber = undefined
+filterDbNumber db = map unpackDbNumber $ filter isDbNumber db
 
 -- Q3. 3. Write a function that gets the most recent date.
 mostRecent :: [DatabaseItem] -> UTCTime
-mostRecent = undefined
+mostRecent db  = result 
+  where
+    result     = foldr (max) headDate allDates
+    headDate   = (head $ filterDbDate theDatabase)
+    allDates   = map unpackDbDate $ filter isDbDate theDatabase 
 
 -- Q4. Write a function that sums all of the DbNumber values.
 sumDb :: [DatabaseItem] -> Integer
-sumDb = undefined
+sumDb db = sum $ filterDbNumber db
 
 -- Q5. Write a function that gets the average of the DbNumber values.
 -- You'll probably need to use fromIntegral
 -- to get from Integer to Double.
 avgDb :: [DatabaseItem] -> Double
-avgDb = undefined
+avgDb db = fromIntegral (sumDb db) / (fromIntegral (length $ filterDbNumber db))
+-- TODO: Is there a Better way to use fromIntegral above?
+
+---
+
+-- 10.7
+-- pg368
+-- Folding and evaluation
+--
+-- What differentiates foldr and foldl is associativity. The right as-
+-- sociativity of foldr means the folding function evaluates from the
+-- innermost cons cell to the outermost (the head). On the other hand,
+-- foldl recurses unconditionally to the end of the list through self-calls
+-- and then the folding function evaluates from the outermost cons
+-- cell to the innermost:
+--
+-- Prelude> take 3 $ foldr (:) [] ([1, 2, 3] ++ undefined)
+-- [1,2,3]
+--
+-- Prelude> take 3 $ foldl (flip (:))
+-- *** Exception: Prelude.undefined
+
+-- NOTE: Relationship between foldr and foldf for FINITE lists
+--
+-- foldr f z xs = foldl (flip f) z (reverse xs)
+--
 
