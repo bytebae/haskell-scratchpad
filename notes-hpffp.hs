@@ -979,6 +979,12 @@ myMinimumBy f (x:xs)
   | f x (head xs) == GT   = myMinimumBy f xs
   | otherwise             = myMinimumBy f (x: (tail xs))
 
+
+--- Concludes the chapter on folding lists
+-- REVISE summary @ pg379
+
 -- SELF: write a function that maps a function over an iterable and returns [(result, enum)]
 myEnumMap :: (a -> b) -> [a] -> [(b, Integer)]
 myEnumMap = undefined
+
+--- Chapter starts: Algebraic datatypes
