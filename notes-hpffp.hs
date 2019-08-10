@@ -985,6 +985,138 @@ myMinimumBy f (x:xs)
 
 -- SELF: write a function that maps a function over an iterable and returns [(result, enum)]
 myEnumMap :: (a -> b) -> [a] -> [(b, Integer)]
-myEnumMap = undefined
+myEnumMap f l = myEnumIndexMap f l 0
+  where
+    myEnumIndexMap f [] c     = []
+    myEnumIndexMap f (l:ls) c = [((f l), c)] ++ myEnumIndexMap f ls (c+1)
 
---- Chapter starts: Algebraic datatypes
+-- Summary definitions
+
+-- 1. A Fold is a higher-order function which, given a function to
+-- accumulate the results and a recursive data structure, returns
+-- the built up value. Usually a “start value” for the accumulation
+-- is provided along with a function that can combine the type of
+-- values in the data structure with the accumulation. The term
+-- fold is typically used with reference to collections of values
+-- referenced by a recursive datatype.
+
+-- 2. 
+-- foldr f z [] = z
+-- foldr f z (x:xs) = f x (foldr f z xs)
+-- Not tail recursive, we give up control to the combining function
+-- f before continuing through the list. foldr’s recursive calls will
+-- bounce between foldr and f.
+
+-- foldl f z [] = z
+-- foldl f z (x:xs) = foldl f (f z x) xs
+-- Tail recursive. foldl invokes itself recursively. The combining
+-- function is only an argument to the recursive fold.
+
+--- Chapter: Algebraic datatypes
+
+-- Let's begin with a review of the important parts of datatypes, using 
+-- the data declarations for Bool and Lists.
+
+--     data Bool     =  False  |  True
+--     [1]   [2]    [3] [4]   [5] [6]
+--    1. Keyword "data" to signal that what follows in a data declaration,
+--       or a declaration of a datatype.
+--    2. Type constructor with no arguments.
+--    3. Equals sign divides the type constructor from its data constructors.
+--    4. A data constructor. In this case, its a data constructor that takes
+--       no arguments (aka a `nullary` constructor). This is one of the
+--       possible values of this type that can show up in term-level code.
+--    5. The pipe denotes a sum type which indicates a logical disjunction
+--       (colloqially, `or`), in what values can have that type.
+--    6. Constructor for the value `True`, another nullary constructor.
+--
+--
+--      data   [] a    =    []    |    a : [a]
+--              [1]         [2]         [3]
+--    1. Type constructor with an argument. An empty list has to be applied to
+--       an argument in order to become a list of `something`. Here the argument
+--       is a polymorphic type variable, so the list's argument can be of
+--       different types
+--    2. Data constructor for the empty list.
+--    3. Data constructor that takes 2 arguments: an `a` and also `[a]`
+
+-- When we talk about a data declaration, we are talking about the
+-- definition of the entire type. If we think of a type as “an enumeration
+-- of constructors that have zero or more arguments,” then Bool is an enumeration of two possible constructors, each of which takes zero
+-- arguments, while the type constructor [] enumerates two possible
+-- constructors and one of them takes two arguments. The pipe denotes
+-- what we call a sum type, a type that has more than one constructor
+-- inhabiting it.
+-- In addition to sum types, Haskell also has product types, and we’ll
+-- talk more about those in a bit. The data constructors in product types
+-- have more than one parameter.
+-- Although the term constructor is often used to describe all type
+-- constructors and data constructors, we can make a distinction be-
+-- tween constants and constructors. Type and data constructors that
+-- take no arguments are constants. They can only store a fixed type
+-- and amount of data. So, in the Bool datatype, for example, Bool is a
+-- type constant, a concrete type that isn’t waiting for any additional
+-- information in the form of an argument in order to be fully realized
+-- as a type. It enumerates two values that are also constants, True and
+-- False, because they take no arguments. While we call True and False
+-- “data constructors”, in fact since they take no arguments, their value
+-- is already established and not being constructed in any meaningful
+-- sense.
+-- However, sometimes we need the flexibility of allowing different
+-- types or amounts of data to be stored in our datatypes. For those
+-- times, type and data constructors may be parameterized. When a
+-- constructor takes an argument, then it’s like a function in at least one
+-- sense – it must be applied to become a concrete type or value. The
+-- following datatypes are pseudonymous versions of real datatypes in
+-- Haskell. We’ve given them pseudonyms because we want to focus
+-- on the syntax, not the semantics, for now.
+
+-- data Trivial = Trivial'
+--    [1]             [2]
+-- 1. Here the type constructor `Trivial` is like a constant value, but
+--    at the type level. It takes no arguments and is thus nullary.
+--    The Haskell Report calls these `type constants` to distinguish them from
+--    type constructors that take arguments.
+-- 2. The data constructor Trivial' is also like a constant value, but it
+--    exists in value, term, or runtime space. These are not three different
+--    things, but three different words for the same space that types serve
+--    to describe. 
+
+-- data UnaryTypeCon a = UnaryValueCon a
+--      [1]                     [2]
+-- 1. UnaryTypeCon is a type constructor of one argument. It's a constructor
+--    awaiting a type constant to be appied to, but it has no behaviour in the
+--    sense that we think of functions as having. Such type-level functions exist
+--    but are not covered here. 
+-- 2. UnaryValueCon is a data contructor of one argument awaiting a value to be
+--    applied to. Again, it doesn't behave like a term-level function in the sense
+--    of performing an operation on data. It's more like a box to put 
+--    values into. Be careful with the box/container analogy as its misleading - not
+--    all type arguments to constructors have value-level witnesses! Some are
+--    phantom - covered later.
+
+-- 11.5 Data constructors and values
+
+data PugType = PugData
+data HuskyType a = HuskyData
+data DogueDeBordeaux doge = DogueDeBordeaux doge
+
+myPug = PugData :: PugType
+
+myHusky :: HuskyType a
+myHusky = HuskyData
+
+myOtherHusky :: Num a => HuskyType a
+myOtherHusky = HuskyData
+
+myOtherOtherHusky :: HuskyType [[[[[Int]]]]]
+myOtherOtherHusky = HuskyData
+
+myDoge :: DogueDeBordeaux Int
+myDoge = DogueDeBordeaux 10
+
+-- badDode :: DogueDeBordeaux String
+-- badDoge = DogueDeBordeaux 10 --- Won't work
+
+data Doggies a = Husky a | Mastiff a deriving (Eq, Show)
+
