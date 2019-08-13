@@ -1,3 +1,6 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 import Data.Char
 import Data.List as L
 import Data.Time
@@ -60,6 +63,7 @@ data Identity a =
 
 data Ldent a = Ldent a deriving (Show, Eq, Ord)
 
+-- TODO: Remember this!!!
 instance (Eq a) => Eq (Identity a) where
   (==) (Identity v) (Identity v') = v == v'
 
@@ -114,7 +118,7 @@ instance (Eq a, Eq b) => Eq (EitherOr a b) where
 
 -- Num typeclass
 
-check' :: Ord a => a -> a -> Bool -- Eq typeclass is suffic Ord is overkill for Eq comparsn
+check' :: Ord a => a -> a -> Bool
 check' a a' = a == a'
 
 -- -- self problem: create stringSucc which
@@ -123,7 +127,7 @@ check' a a' = a == a'
 stringSucc :: String -> String
 stringSucc s =  -}
 
--- example of bad things... ** TODO -> wut?
+-- example of bad things... ** TODO: understand this better.
 
 class Numberish a where
   fromNumber :: Integer -> a
@@ -147,7 +151,7 @@ sumNumberish a a' = fromNumber summed where
   integerOfAPrime = toNumber a'
   summed = integerOfA + integerOfAPrime
 
-  -- example of worse things... ** TODO: wut? wrt default vals in typeclass defs
+  -- example of worse things... ** TODO: understand this better.
 
 class NumberishWorse a where
   fromNumberWorse      :: Integer -> a
@@ -1012,7 +1016,10 @@ myEnumMap f l = myEnumIndexMap f l 0
 -- Tail recursive. foldl invokes itself recursively. The combining
 -- function is only an argument to the recursive fold.
 
+
+
 --- Chapter: Algebraic datatypes
+
 
 -- Let's begin with a review of the important parts of datatypes, using 
 -- the data declarations for Bool and Lists.
@@ -1040,28 +1047,8 @@ myEnumMap f l = myEnumIndexMap f l 0
 --    2. Data constructor for the empty list.
 --    3. Data constructor that takes 2 arguments: an `a` and also `[a]`
 
--- When we talk about a data declaration, we are talking about the
--- definition of the entire type. If we think of a type as “an enumeration
--- of constructors that have zero or more arguments,” then Bool is an enumeration of two possible constructors, each of which takes zero
--- arguments, while the type constructor [] enumerates two possible
--- constructors and one of them takes two arguments. The pipe denotes
--- what we call a sum type, a type that has more than one constructor
--- inhabiting it.
--- In addition to sum types, Haskell also has product types, and we’ll
--- talk more about those in a bit. The data constructors in product types
--- have more than one parameter.
--- Although the term constructor is often used to describe all type
--- constructors and data constructors, we can make a distinction be-
--- tween constants and constructors. Type and data constructors that
--- take no arguments are constants. They can only store a fixed type
--- and amount of data. So, in the Bool datatype, for example, Bool is a
--- type constant, a concrete type that isn’t waiting for any additional
--- information in the form of an argument in order to be fully realized
--- as a type. It enumerates two values that are also constants, True and
--- False, because they take no arguments. While we call True and False
--- “data constructors”, in fact since they take no arguments, their value
--- is already established and not being constructed in any meaningful
--- sense.
+-- NOTE: A type is an enumeration of constructors that have >=0 arguments...
+
 -- However, sometimes we need the flexibility of allowing different
 -- types or amounts of data to be stored in our datatypes. For those
 -- times, type and data constructors may be parameterized. When a
@@ -1092,13 +1079,14 @@ myEnumMap f l = myEnumIndexMap f l 0
 --    applied to. Again, it doesn't behave like a term-level function in the sense
 --    of performing an operation on data. It's more like a box to put 
 --    values into. Be careful with the box/container analogy as its misleading - not
---    all type arguments to constructors have value-level witnesses! Some are
---    phantom - covered later.
+--    NOT all `type arguments` to constructors have value-level witnesses! Some
+--    are phantom - covered later.
 
 -- 11.5 Data constructors and values
 
+
 data PugType = PugData
-data HuskyType a = HuskyData
+data HuskyType a = HuskyData -- `phantom datatype <- ignores `data`-constructor argument
 data DogueDeBordeaux doge = DogueDeBordeaux doge
 
 myPug = PugData :: PugType
@@ -1107,10 +1095,10 @@ myHusky :: HuskyType a
 myHusky = HuskyData
 
 myOtherHusky :: Num a => HuskyType a
-myOtherHusky = HuskyData
+myOtherHusky = HuskyData      -- phantom type argument to the dataconstructor
 
 myOtherOtherHusky :: HuskyType [[[[[Int]]]]]
-myOtherOtherHusky = HuskyData
+myOtherOtherHusky = HuskyData -- phantom type argument to the dataconstructor
 
 myDoge :: DogueDeBordeaux Int
 myDoge = DogueDeBordeaux 10
@@ -1120,3 +1108,208 @@ myDoge = DogueDeBordeaux 10
 
 data Doggies a = Husky a | Mastiff a deriving (Eq, Show)
 
+-- Types are known before runtime, whether through explicit declaration or
+-- type inference, and that’s what makes them static types. Information about 
+-- types does not persist through to runtime. Data are what we’re
+-- working with at runtime.
+-- Types circumscribe values and in that way, they describe which values are
+-- flowing through what parts of your program.
+
+
+-- type constructors -- compile-time
+
+-- -------------------- phase separation
+
+-- data constructors -- runtime
+
+-- Both data constructors and type constructors begin with capital
+-- letters, but a constructor before the = in a datatype definition is a type
+-- constructor, while constructors after the = are data constructors. Data
+-- constructors are usually generated by the declaration. One tricky
+-- bit here is that when data constructors take arguments, those argu-
+-- ments refer to other types. Because of this, not everything referred
+-- to in a datatype declaration is necessarily generated by that datatype
+-- itself.
+
+data Price          = Price Integer deriving (Show, Eq)
+data Manufacturer   = Mini | Mazda | Tata deriving (Show, Eq)
+data Airline        = JetAir | AirAsia | Indigo deriving (Show, Eq)
+data Vehicle        = Car Manufacturer Price | Plane Airline deriving (Show, Eq)
+
+myCar     = Car Mini (Price 1000)
+urCar     = Car Mazda (Price 2000)
+clownCar  = Car Tata (Price 5)
+doge      = Plane Indigo
+
+isCar :: Vehicle -> Bool
+isCar (Car _ _)     = True
+isCar _             = False
+
+isPlane :: Vehicle -> Bool
+isPlane (Plane _)   = True
+isPlane _           = False
+
+areCars :: [Vehicle] -> [Bool]
+areCars v = map isCar v
+
+getManufacturer :: Vehicle -> Manufacturer
+getManufacturer (Car m p) = m
+
+-- 11.7 Data constructor arities
+
+-- Arity refers to the number of arguments a function or constructor takes.
+-- Data constructors that take one argument are called unary.
+-- Data constructors that take more than one argument are called `products`.
+
+-- 11.8 What makes these datatypes algebraic?
+
+-- The cardinality of a datatype is the number of possible values
+-- it defines. That number can be as small as 0 or as large as infinite
+-- (for example, numeric datatypes, lists). Knowing how many possible
+-- values inhabit a type can help you reason about your programs
+
+-- A unary data constructor takes
+-- one argument. In the declaration of the datatype, that parameter
+-- will be a type, not a value. Now, instead of your data constructor
+-- being a constant, or a known value, the value will be constructed at
+-- runtime from the argument we applied it to.
+-- Datatypes that only contain a unary constructor always have the
+-- same cardinality as the type they contain. In the following, Goats has
+-- the same number of inhabitants as Int:
+-- data Goats = Goats Int deriving (Eq, Show)
+-- Anything that is a valid Int, must also be a valid argument to the
+-- Goats constructor. Anything that isn’t a valid Int also isn’t a valid
+-- count of Goats.
+-- For cardinality this means unary constructors are the identity
+-- function.
+
+-- 11.9 newtype
+
+-- We will now look at a way to define a type that can only ever have a
+-- single unary data constructor. We use the newtype keyword to mark
+-- these types, as they are different from type declarations marked with
+-- the data keyword as well as from type synonym definitions marked
+-- by the type keyword. Like other datatypes that have a single unary
+-- constructor, the cardinality of a newtype is the same as that of the type
+-- it contains.
+-- A newtype cannot be a product type, sum type, or contain nullary
+-- constructors, but it has a few advantages over a vanilla data dec-
+-- laration. One is that it has no runtime overhead, as it reuses the
+-- representation of the type it contains. It can do this because it’s not
+-- allowed to be a record (product type) or tagged union (sum type).
+-- The difference between newtype and the type it contains is gone by
+-- the time the compiler generates the code.
+
+-- https://stackoverflow.com/questions/991467/haskell-type-vs-newtype-with-respect-to-type-safety
+-- https://www.reddit.com/r/haskell/comments/6xri4d/whats_the_difference_between_newtype_type_and_data/
+
+data GoatsData = GoatsD Int deriving (Show, Eq)
+newtype Goats = Goats Int deriving (Show, Eq)
+
+tooManyGoats :: Goats -> Bool -- will NOT work if it were :: GoatsD -> Bool
+tooManyGoats (Goats n) = n > 42
+
+-- One key contrast between a newtype and a type alias is
+-- that you can define typeclass instances for newtypes that differ from
+-- the instances for their underlying type. You can’t do that for type
+-- synonyms.
+
+-- TODO: Revisit previous lesson on pg 200 - typeclasses, instances, and class def
+
+-- Remember that a typeclass is a set of operations that can be performed on a 
+-- particular type, or set of types if the typeclass is polymorphic.
+-- In the case of polymorphic typeclasses, instances will have to be defined
+-- separately for each type that the typeclass serves.
+
+-- 
+
+class TooMany a where           -- A polymorphic typeclass
+  tooMany :: a -> Bool          -- Members of this typeclass can access this fn
+
+instance TooMany Int where      -- Definition of a member of this TC, with type Int 
+  tooMany n = n > 42            -- Defines the tooMany fn for an arg of type Int
+
+newtype Goats' = Goats' Int deriving Show
+
+instance TooMany Goats' where   -- Definition of another member of type Goats'
+  tooMany (Goats' n) = n > 43   -- Defines the tooMany fn for vals of type Goats'
+
+newtype Goats'' = Goats'' Int deriving (Show, Eq, TooMany)
+
+-- NOTE: We we don't have to define an instance of TooMany for Goats'' that's
+-- merely identical to the Int instance. We can reuse the instance that we
+-- already have. This is also nice for times when we want every typeclass
+-- instance to be the same EXCEPT for the one we want to change.
+
+-- Exercises: Pg 404 Logic Goats
+
+-- 1. Reusing the TooMany typeclass, write an instance of the typeclass
+-- for the type (Int, String). This will require adding a language
+-- pragma named FlexibleInstances 4 if you do not use a newtype
+-- — GHC will tell you what to do.
+
+instance TooMany (Int, String) where
+  tooMany (n, s) = (length s) > n
+
+newtype Goats1 = Goats1 (Int, String) deriving (Show, Eq, TooMany)
+
+-- 2. Make another TooMany instance for (Int, Int). Sum the values
+-- together under the assumption this is a count of goats from two
+-- fields.
+
+-- instance TooMany (Int, Int) where
+--   tooMany (n1, n2) = n1 > n2
+
+newtype Goats2 = Goats2 (Int, Int) deriving (Show, Eq, TooMany)
+
+-- 3. Make another TooMany instance, this time for (Num a, TooMany a)
+-- => (a, a). This can mean whatever you want, such as summing
+-- the two numbers together.
+
+
+-- TODO: Revise instances...
+-- pg404 Q3
+instance (Num a, Eq a, TooMany a) => TooMany (a, a) where
+  tooMany (e1, e2) = e1 == e2
+
+newtype Goats3 a = Int a deriving (Show, Eq, TooMany)
+-- TODO: check if above works
+
+
+-- 11.10 Sum types
+
+-- A product type’s cardinality is the product of the cardinalities of its inhabitants.
+-- Arithmetically, products are the result of multiplication. Where a sum type
+-- was expressing or, a product type expresses and.
+-- For those that have programmed in C-like languages before, a
+-- product is like a struct. For those that haven’t, a product is a way to
+-- carry multiple values around in a single data constructor. Any data
+-- constructor with two or more type arguments is a product.
+
+-- We said previously that tuples are anonymous products. The
+-- declaration of the tuple type looks like this:
+-- ( , ) :: a -> b -> (a, b)
+-- This is a product, like a product type: it gives you a way to en-
+-- capsulate two pieces of data, of possibly (though not necessarily)
+-- different types, in a single value.
+-- We’ll look next at a somewhat silly sum type:
+
+data QuantumBool =  QuantumTrue
+                  | QuantumFalse
+                  | QuatumBoth      deriving (Eq, Show)
+
+data TwoQs       =  MkTwoQs QuantumBool QuantumBool deriving (Eq, Show)
+
+-- The datatype TwoQs has one data constructor, MkTwoQs, that takes
+-- two arguments, making it a product of the two types that inhabit it.
+-- Each argument is of type QuantumBool, which has a cardinality of 3.
+
+-- We could have also written the TwoQs type using a type alias and
+-- the tuple data constructor. Type aliases create type constructors, not
+-- data constructors:
+
+type TwoQs' = (QuantumBool, QuantumBool)
+
+-- Record syntax
+
+data PersonR = MkPerson String Int deriving (Eq, Show)
