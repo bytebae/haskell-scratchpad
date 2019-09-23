@@ -1604,11 +1604,12 @@ isDairyFarmer (Farmer _ _ DairyFarmer)  = True
 isDairyFarmer _                         = False
 
 -- Now we construct a product that uses the record syntax
+-- NOTE: observe the following carefully
 data FarmerRec = FarmerRec { farmername   :: FarmerName
                            , acres        :: Acres
                            , farmerType   :: FarmerType } deriving Show
 isDairyFarmerRec :: FarmerRec -> Bool
-isDairyFarmerRec farmerRec = case farmerType farmerRec of
+isDairyFarmerRec farmerRec = case farmerType farmerRec of -- This.
   DairyFarmer -> True
   _           -> False
 
@@ -1637,3 +1638,88 @@ data CarCorrect = CarCorr { make :: String
 -- The Null is still not great, but
 -- we're leaving it in to make a point
 data AutomobileCorr = Null | Automob CarCorrect
+
+-- p249 Function type is exponential
+-- Given a function a -> b, we can calculate the
+-- inhabitants with the formula nb ^ na, where:
+-- nb -> number of possible values in b, and
+-- na -> number of possible values of a
+
+data Quantum =  Yes
+              | No
+              | Both deriving (Eq, Show)
+
+quantSum1 :: Either Quantum Quantum
+quantSum1 = Right Yes
+
+quantumSum2 :: Either Quantum Quantum
+quantumSum2 = Right No
+
+quantSum3 :: Either Quantum Quantum
+quantSum3 = Right Both
+
+quantSum4 :: Either Quantum Quantum
+quantSum4 = Left Yes
+
+quantSum5 :: Either Quantum Quantum
+quantSum5 = Left No
+
+quantSum6 :: Either Quantum Quantum
+quantSum6 = Left Both
+
+-- Consider the following function:
+convert1 :: Quantum -> Bool
+-- convert = undefined
+
+-- According to the equality of a -> b = b^a there should be 2^3 or 8
+-- implementations of this function. For a -> b -> c it's (c ^ b) ^ a. 
+-- Does this hold? Write it out and prove it for yourself.
+
+-- skipping type signature here
+convert1 q = case q of
+              Yes   -> True
+              No    -> False
+              Both  -> False
+
+-- skipping type signature here
+convert2 q = case q of
+              Yes   -> True
+              No    -> False
+              Both  -> True
+
+-- similarly for convert3, and so on, we can see that the number of such functions is 8
+
+-- p433: Higher-kinded datatypes
+
+-- Kinds are the types of type constructors, primarily encoding the number of
+-- arguments they take. The default kind in Haskell is *. Kind signatures
+-- work like type signatures, using the same :: and -> syntax, but there
+-- are only a few kinds and you’ll most often see *.
+--
+-- Kinds are not types until they are fully applied. Only types have
+-- inhabitants at the term level. The kind * -> * is waiting for a single *
+-- before it is fully applied. The kind * -> * -> * must be applied twice
+-- before it will be a real type. This is known as a higher-kinded type.
+-- Lists, for example, are higher-kinded datatypes in Haskell.
+--
+-- Because types can be generically polymorphic by taking type
+-- arguments, they can be applied at the type level.
+
+
+-- Silly polymorphic product type
+-- this is identical to (a, b, c, d)
+data Silly a b c d = MkSilly a b c d deriving Show
+
+-- in ghci:
+-- Prelude> :kind Silly
+-- Silly :: * -> * -> * -> * -> *
+-- Prelude> :kind Silly Int
+-- Silly Int :: * -> * -> * -> *
+-- Prelude> :kind Silly Int String
+-- Silly Int String :: * -> * -> *
+-- Prelude> :kind Silly Int String Bool
+-- Silly Int String Bool :: * -> *
+-- Prelude> :kind Silly Int String Bool String
+-- Silly Int String Bool String :: *
+
+-- 11.6 Lists are polymorphic
