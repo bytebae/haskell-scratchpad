@@ -34,10 +34,6 @@ f _ = False
 
 data DayOfWeek = Mon | Tue | Wed |Thu | Fri | Sat | Sun deriving (Show, Eq)
 
--- -- custom ordering for DayOfWeek s.t. Friday is max and all else eq
-
-
-
 data Date = Date DayOfWeek Int deriving Show
 
 {- instance Eq DayOfWeek where
@@ -49,6 +45,7 @@ data Date = Date DayOfWeek Int deriving Show
   (==) Sun Sun = True
   (==) _ _     = False -}
 
+-- -- custom ordering for DayOfWeek s.t. Friday is max and all else EQ
 instance Ord DayOfWeek where
     compare Fri Fri = EQ
     compare Fri _ = GT
@@ -94,6 +91,8 @@ instance Eq StringOrInt where
 
 data PairM a = Pair a a
 
+data PairInt = PairIntVal Int Int
+
 instance Eq a => Eq (PairM a) where
   (==) (Pair v v') (Pair b b') = v == b
 
@@ -123,7 +122,7 @@ check' a a' = a == a'
 
 -- -- self problem: create stringSucc which
 -- -- increments the chars of a string from LSB to MSB
-{- 
+{-
 stringSucc :: String -> String
 stringSucc s =  -}
 
@@ -133,6 +132,8 @@ class Numberish a where
   fromNumber :: Integer -> a
   toNumber :: a -> Integer
 
+-- NOTE: 'newtype` allows "deriving" typeclasses
+--       `type` does not allow the same syntax
 newtype Age = Age Integer deriving (Eq, Show)
 
 instance Numberish Age where
@@ -206,7 +207,7 @@ jung :: [Int] -> Int
 jung xs = head $ L.sort xs
 
 -- page: 212 - haskell programming from first principles
--- TODO: create a fn with the following def: 
+-- TODO: create a fn with the following def:
 --    chk :: Eq b => (a -> b) -> a -> b -> Bool
 --    chk = ???
 
@@ -233,13 +234,13 @@ instance Fractional Nada where
 
 bindExp :: Integer -> String
 bindExp x = let y =10; z = y + x in
-            "the int was: " ++ show x ++ 
+            "the int was: " ++ show x ++
             " and y was: " ++ show y ++
             " and z was: " ++ show z
 
 bindExp2 :: Integer -> String
-bindExp2 x = let x = 10; y = 5 in 
-  "x was: " ++ show x ++ 
+bindExp2 x = let x = 10; y = 5 in
+  "x was: " ++ show x ++
   " and y was: " ++ show y
 
 mTh1 x y z = x * y * z
@@ -257,7 +258,7 @@ mflipDeAnon f x y = f y x
 newtype Username = Username String
 newtype AccountNumber = AccountNumber Integer
 
-data User = UnregisteredUser 
+data User = UnregisteredUser
             | RegisteredUser Username AccountNumber
 
 printUser :: User -> IO()
@@ -323,7 +324,7 @@ gPage262 :: (a -> b) -> (a, c) -> (b, c)
 gPage262 f1 (a, c) = result
   where result = ((f1 a),  c)
         f1 = undefined
-      
+
 roundTrip :: (Show a, Read a) => a -> a
 roundTrip a = read (show a)
 
@@ -356,7 +357,7 @@ factorial n = n * factorial (n - 1)
 
 incTimes :: (Eq a, Num a) => a -> a -> a
 incTimes 0 n = n
-incTimes times n = 1 + (incTimes (times-1) n) 
+incTimes times n = 1 + (incTimes (times-1) n)
 
 -- applyTimes is a fn that applies another fn (b -> b), a number of times
 applyTimes :: (Eq a, Num a) => a -> (b -> b) -> b -> b
@@ -515,7 +516,7 @@ myWords inputS = resultList
     word = takeWhile (/=' ') $ dropWhile (==' ') inputS
     lPos = length word
     (_, restS) = splitAt lPos inputS
-    resultList = [word] ++ myWords (dropWhile (/=' ') restS) 
+    resultList = [word] ++ myWords (dropWhile (/=' ') restS)
 -- derived from: https://stackoverflow.com/questions/53461230/how-would-i-split-a-string-after-the-spaces-in-haskell
 
 -- recursiveTraverse :: [Char] -> String
@@ -535,7 +536,7 @@ acro xs = [x | x <- xs, elem x ['A'..'Z']]
 -- We can use a special command in GHCi called sprint to print vari-
 -- ables and see what has been evaluated already, with the underscore
 -- representing expressions that haven’t been evaluated yet.
--- WARNING: :sprint has some behavioral quirks that can be a bit 
+-- WARNING: :sprint has some behavioral quirks that can be a bit
 -- frustrating.
 
 -- Spines are evaluated independently of values
@@ -600,27 +601,27 @@ capitalizeAll (x:xs) = [toUpper x] ++ capitalizeAll xs
 
 --- Casesar cipher with max displacement 26
 -- alphabetsLower = ['a'..'z']
--- alphabetsLower = 
+-- alphabetsLower =
 -- alphabetsUpper = map toUpper alphabetsLower
 
--- Above approach is replaced with ord, chr (from data.Char) 
+-- Above approach is replaced with ord, chr (from data.Char)
 -- and mod (standard?)
 
 caesarCipher :: Int -> String -> String
 caesarCipher _ [] = []
 caesarCipher shiftAmount (s:ss)
-  | isLower s = [chr ((mod (ord s - ord 'a' + shiftAmount) 26) + ord 'a')] ++ 
+  | isLower s = [chr ((mod (ord s - ord 'a' + shiftAmount) 26) + ord 'a')] ++
                 (caesarCipher shiftAmount ss)
-  | otherwise = [chr ((mod (ord s - ord 'A' + shiftAmount) 26) + ord 'A')] ++ 
+  | otherwise = [chr ((mod (ord s - ord 'A' + shiftAmount) 26) + ord 'A')] ++
                 (caesarCipher shiftAmount ss)
 
 -- TODO: include an unCaesar function
 uncaesarCipher :: Int -> String -> String
 uncaesarCipher _ [] = []
 uncaesarCipher shiftAmount (s:ss)
-  | isLower s       = [chr ((mod (ord s - ord 'a' - shiftAmount) 26) + ord 'a')] ++ 
+  | isLower s       = [chr ((mod (ord s - ord 'a' - shiftAmount) 26) + ord 'a')] ++
                       (uncaesarCipher shiftAmount ss)
-  | otherwise       = [chr ((mod (ord s - ord 'A' - shiftAmount) 26) + ord 'A')] ++ 
+  | otherwise       = [chr ((mod (ord s - ord 'A' - shiftAmount) 26) + ord 'A')] ++
                       (uncaesarCipher shiftAmount ss)
 
 --- Folding lists
@@ -640,13 +641,13 @@ foldrExample = foldr (\x y -> concat ["(", x, "+", y, ")"]) "0" someRange
 
 ---
 -- Write an 'ANY' function that takes another function (a -> Bool
--- and a list [a], and returns the OR of all [f a] 
--- 
+-- and a list [a], and returns the OR of all [f a]
+--
 
 myAny :: (a -> Bool) -> [] a -> Bool
 myAny f as = foldr (\m n -> f m || n) False as
 
--- The ANY function without foldr -- note the explicit right-associativity 
+-- The ANY function without foldr -- note the explicit right-associativity
 myAny' :: (a -> Bool) -> [] a -> Bool
 myAny' _ []     = False
 myAny' f (a:as) = (f a || False) || (myAny' f as) -- is it like python's OR?
@@ -826,11 +827,11 @@ filterDbNumber db = map unpackDbNumber $ filter isDbNumber db
 
 -- Q3. 3. Write a function that gets the most recent date.
 mostRecent :: [DatabaseItem] -> UTCTime
-mostRecent db  = result 
+mostRecent db  = result
   where
     result     = foldr (max) headDate allDates
     headDate   = (head $ filterDbDate theDatabase)
-    allDates   = map unpackDbDate $ filter isDbDate theDatabase 
+    allDates   = map unpackDbDate $ filter isDbDate theDatabase
 
 -- Q4. Write a function that sums all of the DbNumber values.
 sumDb :: [DatabaseItem] -> Integer
@@ -1004,7 +1005,7 @@ myEnumMap f l = myEnumIndexMap f l 0
 -- fold is typically used with reference to collections of values
 -- referenced by a recursive datatype.
 
--- 2. 
+-- 2.
 -- foldr f z [] = z
 -- foldr f z (x:xs) = f x (foldr f z xs)
 -- Not tail recursive, we give up control to the combining function
@@ -1021,7 +1022,7 @@ myEnumMap f l = myEnumIndexMap f l 0
 --- Chapter: Algebraic datatypes
 
 
--- Let's begin with a review of the important parts of datatypes, using 
+-- Let's begin with a review of the important parts of datatypes, using
 -- the data declarations for Bool and Lists.
 
 --     data Bool     =  False  |  True
@@ -1067,17 +1068,17 @@ myEnumMap f l = myEnumIndexMap f l 0
 -- 2. The data constructor Trivial' is also like a constant value, but it
 --    exists in value, term, or runtime space. These are not three different
 --    things, but three different words for the same space that types serve
---    to describe. 
+--    to describe.
 
 -- data UnaryTypeCon a = UnaryValueCon a
 --      [1]                     [2]
 -- 1. UnaryTypeCon is a type constructor of one argument. It's a constructor
 --    awaiting a type constant to be appied to, but it has no behaviour in the
 --    sense that we think of functions as having. Such type-level functions exist
---    but are not covered here. 
+--    but are not covered here.
 -- 2. UnaryValueCon is a data contructor of one argument awaiting a value to be
 --    applied to. Again, it doesn't behave like a term-level function in the sense
---    of performing an operation on data. It's more like a box to put 
+--    of performing an operation on data. It's more like a box to put
 --    values into. Be careful with the box/container analogy as its misleading - not
 --    NOT all `type arguments` to constructors have value-level witnesses! Some
 --    are phantom - covered later.
@@ -1109,7 +1110,7 @@ myDoge = DogueDeBordeaux 10
 data Doggies a = Husky a | Mastiff a deriving (Eq, Show)
 
 -- Types are known before runtime, whether through explicit declaration or
--- type inference, and that’s what makes them static types. Information about 
+-- type inference, and that’s what makes them static types. Information about
 -- types does not persist through to runtime. Data are what we’re
 -- working with at runtime.
 -- Types circumscribe values and in that way, they describe which values are
@@ -1216,17 +1217,17 @@ tooManyGoats (Goats n) = n > 42
 
 -- TODO: Revisit previous lesson on pg 200 - typeclasses, instances, and class def
 
--- Remember that a typeclass is a set of operations that can be performed on a 
+-- Remember that a typeclass is a set of operations that can be performed on a
 -- particular type, or set of types if the typeclass is polymorphic.
 -- In the case of polymorphic typeclasses, instances will have to be defined
 -- separately for each type that the typeclass serves.
 
--- 
+--
 
 class TooMany a where           -- A polymorphic typeclass
   tooMany :: a -> Bool          -- Members of this typeclass can access this fn
 
-instance TooMany Int where      -- Definition of a member of this TC, with type Int 
+instance TooMany Int where      -- Definition of a member of this TC, with type Int
   tooMany n = n > 42            -- Defines the tooMany fn for an arg of type Int
 
 newtype Goats' = Goats' Int deriving Show
@@ -1313,3 +1314,326 @@ type TwoQs' = (QuantumBool, QuantumBool)
 -- Record syntax
 
 data PersonR = MkPerson String Int deriving (Eq, Show)
+
+jm = MkPerson "julie" 108
+ca = MkPerson "chris" 16
+
+namae :: PersonR -> String
+namae (MkPerson s _) = s
+
+-- Now let’s see how we could define a similar product type but with
+-- record syntax:
+
+data PersonR' = PersonR' {  name :: String
+                          , age  :: Int }
+                          deriving (Show, Eq)
+
+data Fiction = FictionL deriving Show
+data Nonfiction = NonfictionL deriving Show
+
+data BookType = FictionBook Fiction
+              | NonfictionBook Nonfiction
+              deriving Show
+-- Above, it is the type constructors that are the arguments to FictionBook and
+-- NonfictionBook. Type values are named differently to enable noticing the
+-- difference
+
+-- Above is the sum type. Next we're going to define a type synonym called
+-- AuthorName and a product type called Author.
+
+type AuthorName = String
+
+data Author = Author (AuthorName, BookType)
+
+-- This isn't a sum of products, so it isn't in normal form. We can apply the
+-- distributive property and rewrite Author in normal form.
+
+-- type AuthorNameNormal = String
+
+data AuthorNormal =   Fiction AuthorName
+                    | NonFiction AuthorName
+                    deriving (Show, Eq)
+
+-- Products distribute over sums. Just as we would do with the ex-
+-- pression a * (b + c), where the inhabitants of the sum type BookType
+-- are the b and c, we broke those values out and made a sum of prod-
+-- ucts. Now it’s in normal form because no further evaluation can be
+-- done of these constructors until some operation or computation is
+-- done using these types.
+
+-- data ExprSum = Number Int
+--              | Add Expr Expr -- <== ?
+--              | Minus Expr
+--              | Mult Expr Expr
+--              | Divide Expr Expr
+-- This is in normal form because it’s a sum (type) of products: (Num-
+-- ber Int) + Add (Expr Expr) + ...
+
+-- A stricter interpretation of normal form or “sum of products”
+-- would require representing products with tuples and sums with
+-- Either. The previous datatype in that form would look like the fol-
+-- lowing:
+
+-- TODO: The following errors out with "Cycle in type synonym declarations"
+
+-- type Number = Int
+-- type Add    = (Expr, Expr)
+-- type Minus  = Expr
+-- type Mult   = (Expr, Expr)
+-- type Divide = (Expr, Expr)
+
+-- type Expr   =
+--               Either Number
+--                 (Either Add
+--                   (Either Minus
+--                     (Either Mult Divide)))
+
+data FlowerType =   Gardenia
+                  | Daisy
+                  | Rose
+                  | Lilac
+                  deriving Show
+
+type Gardener = String
+
+data Garden   =
+      Garden Gardener FlowerType
+      deriving Show
+
+-- What is the normal form of Garden?
+
+data GardenNormal = Gardener FlowerType deriving Show
+-- TODO: Re-reminder: types, typeclasses and instances need revision
+
+
+-- 11.13 Constructing and deconstructing values
+
+-- There are essentially two things we can do with a value. We can
+-- generate or construct it or we can match on it and consume it. In this
+-- section will elaborate on that and how to construct values of different types.
+
+
+-- We’ll start by defining a collection of datatypes:
+
+data GuessWhat          = Chickenbutt deriving (Eq, Show)
+data Id a               = MkId a deriving (Eq, Show)
+data Product a b        = Product a b deriving (Eq, Show)
+data Sum a b            = First a | Second b deriving (Eq, Show)
+data RecordProduct a b  = RecordProduct { pfirst  :: a
+                                        , psecond :: b }
+                                        deriving (Eq, Show)
+-- NOTE+COMMIT: The above expression is known as "Record Syntax"
+
+-- Now that we have different sorts of datatypes to work with, we’ll
+-- move on to constructing values of those types.
+
+newtype NumCow          = NumCow Int deriving (Eq, Show)
+newtype NumPig          = NumPid Int deriving (Eq, Show)
+
+data Farmhouse          = Farmhouse NumCow NumPig deriving (Eq, Show)
+
+type Farmhouse'         = Product NumCow NumPig -- prodcut with 2 args
+
+-- NOTE: Farmhouse and Farmhouse' are the same !!!
+
+newtype NumSheep        = NumSheep Int deriving (Eq, Show)
+
+data BigFarmhouse       = BigFarmhouse NumCow NumPig NumSheep -- product c 3 args
+                          deriving (Eq, Show)
+
+type NameS              = String
+type AgeS               = Int
+type LovesMud           = Bool
+
+type PoundsOfWool       = Int
+
+data CowInfo            = CowInfo NameS AgeS deriving (Eq, Show)
+data PigInfo            = PigInfo NameS AgeS LovesMud deriving (Eq, Show)
+data SheepInfo          = SheepInfo NameS AgeS PoundsOfWool
+                          deriving (Eq, Show)
+
+data Animal             =
+                          Cow CowInfo
+                        | Pig PigInfo
+                        | Sheep SheepInfo
+                        deriving (Eq, Show)
+-- Alternately...
+data Animal'            = Sum CowInfo (Sum PigInfo SheepInfo)
+
+-- Constructing Values - 418
+
+-- We just define
+-- trivialValue to be the nullary data constructor Chickenbutt and we
+-- have a value of the type GuessWhat.
+
+trivialValue :: GuessWhat
+trivialValue = Chickenbutt
+
+data IdPP a = MkIdPP a deriving (Eq, Show)
+
+idInt :: IdPP Integer
+idInt = MkIdPP 10
+
+idIdentity :: IdPP (a -> a)
+idIdentity = MkIdPP $ \x -> x
+
+type Awesome    = Bool
+type Name       = String
+
+person :: Product Name Awesome
+person = Product "Dlido" True
+
+-- constructors with data synonyms
+data Twitter = Twitter deriving (Eq, Show)
+
+data AskFm = AskFm deriving (Eq, Show)
+
+socialNetwork :: Sum Twitter AskFm
+socialNetwork = First Twitter
+
+data SocialNetwork' = TwitterP | AskFmP deriving (Eq, Show)
+
+-- constructors with type synonyms
+
+type TwitterT = String
+type AskFmT = String
+
+twitter :: Sum TwitterT AskFmT
+twitter = First "TwitterT"
+
+askFm :: Sum TwitterT AskFmT
+askFm = First "AskFmT"
+
+myRecord :: RecordProduct Integer Float
+myRecord = RecordProduct 42 0.0001
+
+-- Remember the data consttructor for this is:
+-- data RecordProduct a b  = RecordProduct { pfirst  :: a
+--                                         , psecond :: b }
+--                                         deriving (Eq, Show)
+
+
+-- NOTE: Printing myRecord gives:
+--    RecordProduct {pfirst = 42, psecond = 1.0e-4}
+-- For this reason you can rewrite myRecord as:
+
+myRecord' :: RecordProduct Integer Float
+myRecord' = RecordProduct { pfirst = 42,
+                            psecond = 0.001 }
+
+data OperatingSystem =    GnuPlusLinux 
+                        | OpenBSD
+                        | Mac
+                        | Windows
+                        deriving (Eq, Show)
+        
+data ProgrammingLanguage =  Haskell
+                          | Agda
+                          | Idris
+                          | PureScript
+                          deriving (Eq, Show)
+
+data Programmer     =  Programmer { os :: OperatingSystem
+                                  , lang :: ProgrammingLanguage }
+                                  deriving (Eq, Show)
+                                
+-- Excercise: Programmers - p423
+-- Write a function that generates all possible values of Programmer. Use
+-- the provided lists of inhabitants of OperatingSystem and ProgrammingLanguage.
+
+allOSs :: [OperatingSystem]
+allOSs = [ GnuPlusLinux
+         , OpenBSD
+         , Mac
+         , Windows
+        ]
+allLanguages :: [ProgrammingLanguage]
+allLanguages = [Haskell, Agda, Idris, PureScript]
+
+-- answer:
+allProgrammers :: [Programmer]
+allProgrammers = [Programmer x y | x <- allOSs, y <- allLanguages]
+---
+
+data ThereYet = There Integer Float String Bool deriving (Eq, Show)
+
+-- building the types to plug in to "ThereYet"
+
+nope :: Float -> String -> Bool -> ThereYet
+nope = There 10
+
+notYet :: String -> Bool -> ThereYet
+notYet = nope 25.5
+
+notQuite :: Bool -> ThereYet
+notQuite = notYet "Woohoooo"
+
+yuss :: ThereYet
+yuss = notQuite False
+
+-- Notice the way our types progressed.
+
+-- There ::   Integer -> Float -> String -> Bool -> ThereYet
+-- nope ::               Float -> String -> Bool -> ThereYet
+-- notYet ::                      String -> Bool -> ThereYet
+-- notQuite ::                              Bool -> ThereYet
+-- yuss ::                                          ThereYet
+
+-- Percolate values through your programs, not bottoms.
+
+
+
+-- Deconstructing values - p425
+
+-- When we discussed folds, we mentioned the idea of catamorphism.
+-- We explained that catamorphism was about deconstructing lists. This
+-- idea is generally applicable to any datatype that has values.
+
+newtype FarmerName  = FarmerName String deriving Show
+newtype Acres       = Acres Int deriving Show
+
+data FarmerType     = DairyFarmer
+                    | WheatFarmer
+                    | SoyFarmer deriving Show
+
+data Farmer = Farmer FarmerName Acres FarmerType deriving Show
+
+-- Now we write a check that deconstructs using pattern matching
+isDairyFarmer :: Farmer -> Bool
+isDairyFarmer (Farmer _ _ DairyFarmer)  = True
+isDairyFarmer _                         = False
+
+-- Now we construct a product that uses the record syntax
+data FarmerRec = FarmerRec { farmername   :: FarmerName
+                           , acres        :: Acres
+                           , farmerType   :: FarmerType } deriving Show
+isDairyFarmerRec :: FarmerRec -> Bool
+isDairyFarmerRec farmerRec = case farmerType farmerRec of
+  DairyFarmer -> True
+  _           -> False
+
+-- Accidental bottoms from records
+
+-- You can easily propagate bottoms through record types.
+-- Please do not do this:
+
+data AutomobileWrong    = Null' -- Added a "'" to separate it from the correct version 
+                        | CarWrong { make' :: String
+                              , model' :: String
+                              , year' :: Integer }
+                              deriving (Eq, Show)
+-- This is a terrible thing to do, for a couple of reasons. One is this
+-- Null nonsense. Haskell offers you the perfectly lovely datatype Maybe,
+-- which you should use instead. Secondly, consider the case where
+-- one has a Null value, but you’ve used one of the record accessors:
+-- Prelude> make Null
+-- "*** Exception: No match in record selector make
+
+data CarCorrect = CarCorr { make :: String 
+                      , model :: String
+                      , year :: Integer }
+                      deriving (Eq, Show)
+
+-- The Null is still not great, but
+-- we're leaving it in to make a point
+data AutomobileCorr = Null | Automob CarCorrect
