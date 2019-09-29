@@ -1722,4 +1722,60 @@ data Silly a b c d = MkSilly a b c d deriving Show
 -- Prelude> :kind Silly Int String Bool String
 -- Silly Int String Bool String :: *
 
--- 11.6 Lists are polymorphic
+-- p435-11.6 Lists are polymorphic
+-- 
+-- The Haskell definition of lists is as follows.
+--
+-- data [] a = [] | a : [a]
+--
+-- 1. '[]' is the special syntax for the Type Constructor of a list.
+-- 2. 'a' is the single type argument to []. This shows the type to be 
+--    polymorphic
+-- 3. The definition can be a single empty list constructor (Nil,) or...
+-- 4. A single value of type a CONSed with [] a / [a] (which is
+--    the representaion for the rest of the list)
+
+-- Infix type and Data constructors
+
+-- Any operator that starts with a colon (:) must be an `infix type` OR `data
+-- constructor`. 
+-- All `infix data constructors` must start with a -- colon. 
+-- The type constructor of functions, (->), is the only infix type
+-- constructor that doesn’t start with a colon. Another exception is that
+-- they cannot be :: as this syntax is reserved for type assertions.
+--
+-- You can add non-alphanumeric characters to get your own unique 
+-- infix type or data constructor.
+-- Here’s an example of an infix data constructor:
+
+data ExampleInfixDataConstructor a b = a :%-%: b deriving (Eq, Show)
+
+-- Example o/p:
+-- Prelude> 1 :%-%: 2
+-- 1 :%-%: 2
+-- Prelude> k = 1 :%-%: 2
+-- Prelude> :t k
+-- k :: (Num a, Num b) => ExampleInfixDataConstructor a b
+--
+
+-- A value of type ExampleInfixDataConstructor would be a product of 
+-- two arguments, one of type a and one of type b.
+-- Whether or not you choose to use infix data constructors, type
+-- constructors, or typeclass names is down to aesthetic preference.
+
+-- The following example defines the list type without using an infix
+-- operator
+
+data ListNonInfix a = Nil | Cons a (ListNonInfix a) deriving Show
+
+-- Example usage:
+
+-- Prelude> y = Cons 123 Nil
+-- Prelude> y
+-- Cons 123 Nil
+-- Prelude> yy = Cons 234 y
+-- Prelude> yy
+-- Cons 234 (Cons 123 Nil)
+-- Prelude> yyy = Cons 456 yy
+-- Prelude> yyy
+-- Cons 456 (Cons 234 (Cons 123 Nil))
