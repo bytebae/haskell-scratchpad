@@ -1779,3 +1779,68 @@ data ListNonInfix a = Nil | Cons a (ListNonInfix a) deriving Show
 -- Prelude> yyy = Cons 456 yy
 -- Prelude> yyy
 -- Cons 456 (Cons 234 (Cons 123 Nil))
+
+-- checking out the kinding of our list type, and comparing it with []:
+
+-- Prelude> :kind ListNonInfix
+-- ListNonInfix :: * -> *
+
+-- Prelude> :kind []
+-- [] :: * -> *
+
+-- Prelude> :kind ListNonInfix
+-- ListNonInfix Int :: *
+
+-- Prelude>:kind [Int]
+-- *
+
+-- 11.7 Binary Tree
+-- Now we turn our attention to a type similar to list. The type con-
+-- structor for binary trees can take an argument, and it is also recursive
+-- like lists:
+
+data BinaryTree a = 
+    Leaf
+  | Node (BinaryTree a) a (BinaryTree a)
+  deriving (Eq, Ord, Show)
+
+-- Example usage:
+
+-- *Main> let ll = Leaf
+-- *Main> :t ll
+-- ll :: BinaryTree a
+-- *Main> let lll = Node Leaf 10 Leaf
+-- *Main> :t lll
+-- lll :: Num a => BinaryTree a
+-- *Main> let lll = Node Leaf 10 (Node Leaf 12 Leaf)
+-- *Main> :t lll
+-- lll :: Num a => BinaryTree a
+-- *Main> lll
+-- Node Leaf 10 (Node Leaf 12 Leaf)
+
+
+-- insert' :: Ord a => a -> BinaryTree a -> BinaryTree a
+-- insert' b leaf = Node Leaf b Leaf
+-- insert' b (Node left a right)
+--   | b == a  = Node left a right
+--   | b < a   = Node (insert' b left) a right
+--   | b > a   = Node left a (insert' b right)
+
+insert'' :: Ord a => a -> BinaryTree a -> BinaryTree a
+insert'' b Leaf = Node Leaf b Leaf
+insert'' b (Node left a right)
+  | b == a        = Node left a right
+  | b > a         = Node left a (insert'' b right)
+  | b < a         = Node (insert'' b left) a right
+
+-- Example usage: 
+
+-- *Main> let i1 = insert'' 0 Leaf
+-- *Main> i1
+-- Node Leaf 0 Leaf
+-- *Main> let l2 = insert'' 3 i1
+-- *Main> l2
+-- Node Leaf 0 (Node Leaf 3 Leaf)
+-- *Main> let l3 = insert'' 1 l2
+-- *Main> l3
+-- Node Leaf 0 (Node (Node Leaf 1 Leaf) 3 Leaf)
