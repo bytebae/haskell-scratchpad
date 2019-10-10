@@ -1828,10 +1828,10 @@ data BinaryTree a =
 
 insert'' :: Ord a => a -> BinaryTree a -> BinaryTree a
 insert'' b Leaf = Node Leaf b Leaf
-insert'' b (Node left a right)
-  | b == a        = Node left a right
-  | b > a         = Node left a (insert'' b right)
-  | b < a         = Node (insert'' b left) a right
+insert'' b (Node left c right)
+  | b == c        = Node left c right
+  | b > c         = Node left c (insert'' b right)
+  | b < c         = Node (insert'' b left) c right
 
 -- Example usage: 
 
@@ -1844,3 +1844,68 @@ insert'' b (Node left a right)
 -- *Main> let l3 = insert'' 1 l2
 -- *Main> l3
 -- Node Leaf 0 (Node (Node Leaf 1 Leaf) 3 Leaf)
+
+---
+
+-- Given the definition of BinaryTree above, write a map function for the
+-- data structure.
+
+mapTree :: (a -> a) -> BinaryTree a -> BinaryTree a
+mapTree _ Leaf  = Leaf
+mapTree f (Node left a right) = Node (mapTree f left) (f a) (mapTree f right)
+
+-- Example: 
+-- *Main> n = Node Leaf 3 (Node Leaf 4 Leaf)
+-- *Main> :t n
+-- n :: Num a => BinaryTree a
+-- *Main> mapTree (\x -> 2*x) n
+-- Node Leaf 6 (Node Leaf 8 Leaf)
+
+---
+
+-- Write functions to convert BinaryTree values to lists.
+
+orderTree :: BinaryTree a -> [a]
+orderTree Leaf = []
+orderTree (Node left a right) = (orderTree left) ++ [a] ++ (orderTree right)
+
+-- As can be seen, there are a few different ways of ordering the list based on
+-- how the binary tree is tranversed by the recursion. The other 2 are...:
+
+orderTree2 :: BinaryTree a -> [a]
+orderTree2 Leaf = []
+orderTree2 (Node left a right) = [a] ++ orderTree left ++ orderTree right
+
+orderTree3 :: BinaryTree a -> [a]
+orderTree3 Leaf = []
+orderTree3 (Node left a right) = orderTree left ++ orderTree right ++ [a]
+
+orderTree4 :: BinaryTree a -> [a]
+orderTree4 Leaf = []
+orderTree4 (Node left a right) = orderTree right ++ orderTree left ++ [a]
+
+-- and so on...
+
+---
+
+-- Given the definition of BinaryTree we have provided, write a catamor-
+-- phism for the binary trees.
+-- any traversal order is fine
+--foldTree :: (a -> b -> b) -> b -> BinaryTree a -> b
+
+foldTree :: (a -> b -> b) -> BinaryTree a -> b -> b
+foldTree f Leaf acc = acc         -- Remember: acc is set by fn caller
+foldTree f (Node left a right) acc = foldTree f right (f a (foldTree f left acc))
+
+-- Reference
+-- -- Foldl (LEFT) (tail recursion)
+
+-- myFoldl :: (b -> a -> b) -> b -> [] a -> b
+-- myfoldl f acc []      = acc       -- <== This.
+-- myFoldl f acc (a:as)  = myFoldl f (f acc a) as
+
+-- -- contrast with foldr (RIGHT) (non-tail recursion)
+
+-- myFoldr_ :: (a -> b -> b) -> b -> [a] -> b
+-- myFoldr_ f acc []     = acc
+-- myFoldr_ f acc (a:as) = f a (myFoldr f acc as)
