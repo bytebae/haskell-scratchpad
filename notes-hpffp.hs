@@ -1896,16 +1896,3 @@ orderTree4 (Node left a right) = orderTree right ++ orderTree left ++ [a]
 foldTree :: (a -> b -> b) -> BinaryTree a -> b -> b
 foldTree f Leaf acc = acc         -- Remember: acc is set by fn caller
 foldTree f (Node left a right) acc = foldTree f right (f a (foldTree f left acc))
-
--- Reference
--- -- Foldl (LEFT) (tail recursion)
-
--- myFoldl :: (b -> a -> b) -> b -> [] a -> b
--- myfoldl f acc []      = acc       -- <== This.
--- myFoldl f acc (a:as)  = myFoldl f (f acc a) as
-
--- -- contrast with foldr (RIGHT) (non-tail recursion)
-
--- myFoldr_ :: (a -> b -> b) -> b -> [a] -> b
--- myFoldr_ f acc []     = acc
--- myFoldr_ f acc (a:as) = f a (myFoldr f acc as)
