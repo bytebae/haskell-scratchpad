@@ -1915,26 +1915,6 @@ foldTree f (Node left a right) acc = foldTree f right (f a (foldTree f left acc)
 -- ’P’. And so on, so “meet at dawn” encoded with the keyword “ALLY”
 -- becomes “MPPR AE OYWY.”
 
--- -- Reference:
-
-
--- caesarCipher :: Int -> String -> String
--- caesarCipher _ [] = []
--- caesarCipher shiftAmount (s:ss)
---   | isLower s = [chr ((mod (ord s - ord 'a' + shiftAmount) 26) + ord 'a')] ++
---                 (caesarCipher shiftAmount ss)
---   | otherwise = [chr ((mod (ord s - ord 'A' + shiftAmount) 26) + ord 'A')] ++
---                 (caesarCipher shiftAmount ss)
-
--- -- TODO: include an unCaesar function
--- uncaesarCipher :: Int -> String -> String
--- uncaesarCipher _ [] = []
--- uncaesarCipher shiftAmount (s:ss)
---   | isLower s       = [chr ((mod (ord s - ord 'a' - shiftAmount) 26) + ord 'a')] ++
---                       (uncaesarCipher shiftAmount ss)
---   | otherwise       = [chr ((mod (ord s - ord 'A' - shiftAmount) 26) + ord 'A')] ++
---                       (uncaesarCipher shiftAmount ss)
-
 vignereCipher :: String -> String -> String
 vignereCipher kw msg = result
   where
