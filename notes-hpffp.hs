@@ -1896,3 +1896,70 @@ orderTree4 (Node left a right) = orderTree right ++ orderTree left ++ [a]
 foldTree :: (a -> b -> b) -> BinaryTree a -> b -> b
 foldTree f Leaf acc = acc         -- Remember: acc is set by fn caller
 foldTree f (Node left a right) acc = foldTree f right (f a (foldTree f left acc))
+
+---
+
+-- Vigenere Cipher
+
+-- So, for example, if you want to encode the message “meet at
+-- dawn,” the first step is to pick a keyword that will determine which
+-- Caesar cipher to use. We’ll use the keyword “ALLY” here. You repeat
+-- the keyword for as many characters as there are in your original
+-- message:
+-- MEET AT DAWN
+-- ALLY AL LYAL
+-- Now the number of rightward shifts to make to encode each
+-- character is set by the character of the keyword that lines up with it.
+-- The ’A’ means a shift of 0, so the initial M will remain M. But the ’L’
+-- for our second character sets a rightward shift of 11, so ’E’ becomes
+-- ’P’. And so on, so “meet at dawn” encoded with the keyword “ALLY”
+-- becomes “MPPR AE OYWY.”
+
+-- -- Reference:
+
+
+-- caesarCipher :: Int -> String -> String
+-- caesarCipher _ [] = []
+-- caesarCipher shiftAmount (s:ss)
+--   | isLower s = [chr ((mod (ord s - ord 'a' + shiftAmount) 26) + ord 'a')] ++
+--                 (caesarCipher shiftAmount ss)
+--   | otherwise = [chr ((mod (ord s - ord 'A' + shiftAmount) 26) + ord 'A')] ++
+--                 (caesarCipher shiftAmount ss)
+
+-- -- TODO: include an unCaesar function
+-- uncaesarCipher :: Int -> String -> String
+-- uncaesarCipher _ [] = []
+-- uncaesarCipher shiftAmount (s:ss)
+--   | isLower s       = [chr ((mod (ord s - ord 'a' - shiftAmount) 26) + ord 'a')] ++
+--                       (uncaesarCipher shiftAmount ss)
+--   | otherwise       = [chr ((mod (ord s - ord 'A' - shiftAmount) 26) + ord 'A')] ++
+--                       (uncaesarCipher shiftAmount ss)
+
+vignereCipher :: String -> String -> String
+vignereCipher kw msg = result
+  where
+    zippedWords = zip msg (reallignedKeywordList msg kw)
+    result      = [addOffset m k | (m, k) <- zippedWords]
+
+addOffset :: Char -> Char -> Char
+addOffset c k
+  | c == ' '    = ' '
+  | isLower c   = chr (mod (ord c - ord 'a' + offsetCalculate k) 26 + ord 'a')
+  | otherwise   = chr (mod (ord c - ord 'A' + offsetCalculate k) 26 + ord 'A')
+  
+offsetCalculate :: Char -> Int
+offsetCalculate c
+  | isLower c     = ord c - ord 'a'
+  | otherwise     = ord c - ord 'A'
+
+reallignedKeywordList :: String -> String -> String
+reallignedKeywordList msg kw = result
+  where
+    infiniteKwList = foldr (++) "" $ repeat kw
+    result = allignWithSpaces  msg infiniteKwList  ""
+
+allignWithSpaces :: String -> String -> String -> String    
+allignWithSpaces "" _ acc      = acc    
+allignWithSpaces (s:ss) (k:kk) acc
+    | s /= ' '        = (allignWithSpaces ss kk (acc ++ [k]))
+    | otherwise       = (allignWithSpaces ss (k:kk) (acc ++ " "))
