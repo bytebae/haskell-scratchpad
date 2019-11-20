@@ -1936,10 +1936,22 @@ reallignedKeywordList :: String -> String -> String
 reallignedKeywordList msg kw = result
   where
     infiniteKwList = foldr (++) "" $ repeat kw
-    result = allignWithSpaces  msg infiniteKwList  ""
+    result = alignWithSpaces  msg infiniteKwList  ""
 
-allignWithSpaces :: String -> String -> String -> String    
-allignWithSpaces "" _ acc      = acc    
-allignWithSpaces (s:ss) (k:kk) acc
-    | s /= ' '        = (allignWithSpaces ss kk (acc ++ [k]))
-    | otherwise       = (allignWithSpaces ss (k:kk) (acc ++ " "))
+alignWithSpaces :: String -> String -> String -> String    
+alignWithSpaces "" _ acc      = acc    
+alignWithSpaces (s:ss) (k:kk) acc
+    | s /= ' '        = (alignWithSpaces ss kk (acc ++ [k]))
+    | otherwise       = (alignWithSpaces ss (k:kk) (acc ++ " "))
+
+-- Haskell 'as-patterns' - p446 
+
+faaa t@(a:aa) = do -- This is to specify pattern matching on a list
+  print a
+  print aa
+
+faab t@(a,b,c) = do -- This is to specify pattern matching on a 3-tuple
+  print a
+  print b
+  print c
+  return c
